@@ -405,6 +405,15 @@ def _safe_int(value: Any) -> Optional[int]:
     if value is None or value == "":
         return None
     try:
+        # First try direct int conversion
         return int(value)
     except (ValueError, TypeError):
-        return None
+        try:
+            # If that fails, try converting through float first (handles "123.0")
+            float_val = float(value)
+            if float_val.is_integer():
+                return int(float_val)
+            else:
+                return None  # Not a whole number
+        except (ValueError, TypeError):
+            return None
