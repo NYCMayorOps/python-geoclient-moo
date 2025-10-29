@@ -114,7 +114,7 @@ class TestGeoClientMakeRequest:
         mock_response.status_code = 200
         mock_response.json.return_value = {
             "houseNumber": "314",
-            "streetName": "WEST 100 STREET",
+            "boePreferredStreetName": "WEST 100 STREET",
             "geosupportReturnCode": "00",
         }
         mock_get.return_value = mock_response

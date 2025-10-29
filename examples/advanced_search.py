@@ -10,10 +10,18 @@ Before running this script, set your API credentials as environment variables:
 """
 
 import os
+from pathlib import Path
 from typing import List, Dict, Any
 from geoclient_moo import GeoClient
 from geoclient_moo.exceptions import GeoClientError
+from dotenv import load_dotenv
 
+# Load .env file - first try current directory, then parent directory
+load_dotenv()  # Try current directory first
+if not os.getenv("GEOCLIENT_APP_ID"):
+    # Try parent directory if not found in current directory
+    env_path = Path(__file__).parent.parent / '.env'
+    load_dotenv(dotenv_path=env_path)
 
 def demonstrate_search_types(client: GeoClient) -> None:
     """Demonstrate different types of single-field searches."""

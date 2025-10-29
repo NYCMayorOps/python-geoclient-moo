@@ -70,9 +70,9 @@ class TestAddressResponse:
         """Test AddressResponse creation from dictionary."""
         data = {
             "houseNumber": "314",
-            "streetName": "WEST 100 STREET",
+            "boePreferredStreetName": "WEST 100 STREET",
             "boroughCode1In": "1",
-            "boroughName": "MANHATTAN",
+            "firstBoroughName": "MANHATTAN",
             "zipCode": "10025",
             "latitude": "40.79582646522169",
             "longitude": "-73.96790007529056",
@@ -128,12 +128,13 @@ class TestBBLResponse:
     def test_from_dict_basic(self):
         """Test BBLResponse creation from dictionary."""
         data = {
-            "boroughCode": "1",
-            "taxBlock": "1889",
-            "taxLot": "1",
+            "bblBoroughCode": "1",
+            "firstBoroughName": "MANHATTAN",
+            "bblTaxBlock": "1889",
+            "bblTaxLot": "1",
             "bbl": "1018890001",
             "buildingIdentificationNumber": "1079043",
-            "numBuildingsOnLot": "1",
+            "numberOfExistingStructuresOnLot": "1",
             "latitude": "40.79582646522169",
             "longitude": "-73.96790007529056",
             "geosupportReturnCode": "00",
@@ -142,6 +143,7 @@ class TestBBLResponse:
         response = BBLResponse.from_dict(data)
         
         assert response.borough_code == "1"
+        assert response.borough_name == "MANHATTAN"
         assert response.tax_block == "1889"
         assert response.tax_lot == "1"
         assert response.bbl == "1018890001"
@@ -159,10 +161,10 @@ class TestBINResponse:
         data = {
             "buildingIdentificationNumber": "1079043",
             "bbl": "1018890001",
-            "houseNumber": "314",
-            "streetName": "WEST 100 STREET",
-            "boroughCode": "1",
-            "boroughName": "MANHATTAN",
+            "giLowHouseNumber1": "314",
+            "giStreetName1": "WEST 100 STREET",
+            "bblBoroughCode": "1",
+            "firstBoroughName": "MANHATTAN",
             "latitude": "40.79582646522169",
             "longitude": "-73.96790007529056",
             "geosupportReturnCode": "00",
