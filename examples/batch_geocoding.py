@@ -1,0 +1,194 @@
+"""
+Batch geocoding example for the GeoClient MOO library.
+
+This script demonstrates how to geocode multiple addresses efficiently,
+with proper error handling and progress tracking.
+
+Before running this script, set your API credentials as environment variables:
+    export GEOCLIENT_APP_ID="your_app_id"
+    export GEOCLIENT_APP_KEY="your_app_key"
+"""
+
+import os
+import csv
+import time
+from typing import List, Dict, Any
+from geoclient_moo import GeoClient
+from geoclient_moo.exceptions import GeoClientError
+
+
+def batch_geocode_addresses(
+    addresses: List[Dict[str, str]], 
+    client: GeoClient,
+    delay: float = 0.1
+) -> List[Dict[str, Any]]:
+    """
+    Geocode a batch of addresses with error handling and rate limiting.
+    
+    Args:
+        addresses: List of address dictionaries with keys: house_number, street, borough
+        client: Initialized GeoClient instance
+        delay: Delay between requests in seconds (for rate limiting)
+        
+    Returns:
+        List of geocoding results with success/error information
+    """
+    results = []
+    
+    for i, addr in enumerate(addresses, 1):
+        print(f"Processing {i}/{len(addresses)}: {addr['house_number']} {addr['street']}, {addr['borough']}")
+        
+        try:
+            result = client.address(
+                addr['house_number'], 
+                addr['street'], 
+                addr['borough']
+            )
+            
+            # Successful geocoding
+            results.append({
+                'input_house_number': addr['house_number'],
+                'input_street': addr['street'],
+                'input_borough': addr['borough'],
+                'success': True,
+                'latitude': result.latitude,
+                'longitude': result.longitude,
+                'normalized_address': f"{result.house_number} {result.street_name}",
+                'normalized_borough': result.borough_name,
+                'zip_code': result.zip_code,
+                'bbl': result.bbl,
+                'bin': result.bin,
+                'community_district': result.community_district,
+                'error_message': None,
+                'geosupport_return_code': result.geosupport.return_code,
+            })
+            
+        except GeoClientError as e:
+            # Failed geocoding
+            results.append({
+                'input_house_number': addr['house_number'],
+                'input_street': addr['street'],
+                'input_borough': addr['borough'],
+                'success': False,
+                'latitude': None,
+                'longitude': None,
+                'normalized_address': None,
+                'normalized_borough': None,
+                'zip_code': None,
+                'bbl': None,
+                'bin': None,
+                'community_district': None,
+                'error_message': str(e),
+                'geosupport_return_code': getattr(e, 'geosupport_return_code', None),
+            })
+            print(f"  ❌ Error: {e}")
+        
+        # Rate limiting
+        if delay > 0:
+            time.sleep(delay)
+    
+    return results
+
+
+def save_results_to_csv(results: List[Dict[str, Any]], filename: str) -> None:
+    """Save geocoding results to a CSV file."""
+    if not results:
+        print("No results to save")
+        return
+    
+    fieldnames = results[0].keys()
+    
+    with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(results)
+    
+    print(f"✅ Results saved to {filename}")
+
+
+def main():
+    """Demonstrate batch geocoding."""
+    
+    # Get API credentials
+    app_id = os.getenv("GEOCLIENT_APP_ID")
+    app_key = os.getenv("GEOCLIENT_APP_KEY")
+    
+    if not app_id or not app_key:
+        print("ERROR: Please set GEOCLIENT_APP_ID and GEOCLIENT_APP_KEY environment variables")
+        return
+    
+    # Sample addresses to geocode
+    sample_addresses = [
+        {"house_number": "314", "street": "west 100 st", "borough": "manhattan"},
+        {"house_number": "350", "street": "5th ave", "borough": "manhattan"},
+        {"house_number": "1", "street": "wall st", "borough": "manhattan"},
+        {"house_number": "1", "street": "times square", "borough": "manhattan"},
+        {"house_number": "120", "street": "broadway", "borough": "manhattan"},
+        {"house_number": "33", "street": "thomas st", "borough": "manhattan"},
+        {"house_number": "185", "street": "broadway", "borough": "manhattan"},
+        {"house_number": "75", "street": "broad st", "borough": "manhattan"},
+        {"house_number": "invalid", "street": "fake street", "borough": "manhattan"},  # This will fail
+        {"house_number": "200", "street": "vesey st", "borough": "manhattan"},
+    ]
+    
+    print("🏢 Batch Geocoding Example")
+    print("=" * 50)
+    print(f"Geocoding {len(sample_addresses)} addresses...")
+    
+    # Perform batch geocoding
+    with GeoClient(app_id, app_key) as client:
+        start_time = time.time()
+        
+        results = batch_geocode_addresses(
+            addresses=sample_addresses,
+            client=client,
+            delay=0.1  # 100ms delay between requests
+        )
+        
+        end_time = time.time()
+    
+    # Print summary
+    print("\n" + "=" * 50)
+    print("📊 Batch Geocoding Summary")
+    print("=" * 50)
+    
+    successful = sum(1 for r in results if r['success'])
+    failed = len(results) - successful
+    
+    print(f"Total addresses: {len(results)}")
+    print(f"Successful: {successful}")
+    print(f"Failed: {failed}")
+    print(f"Success rate: {successful/len(results)*100:.1f}%")
+    print(f"Total time: {end_time - start_time:.1f} seconds")
+    print(f"Average time per address: {(end_time - start_time)/len(results):.2f} seconds")
+    
+    # Show successful results
+    if successful > 0:
+        print(f"\n✅ Successfully Geocoded Addresses:")
+        print("-" * 40)
+        for result in results:
+            if result['success']:
+                print(f"  {result['normalized_address']}, {result['normalized_borough']}")
+                print(f"    Coordinates: {result['latitude']:.6f}, {result['longitude']:.6f}")
+                print(f"    BBL: {result['bbl']}, ZIP: {result['zip_code']}")
+                print()
+    
+    # Show failed results
+    if failed > 0:
+        print(f"❌ Failed to Geocode:")
+        print("-" * 25)
+        for result in results:
+            if not result['success']:
+                print(f"  {result['input_house_number']} {result['input_street']}, {result['input_borough']}")
+                print(f"    Error: {result['error_message']}")
+                print()
+    
+    # Save results to CSV
+    output_filename = "geocoding_results.csv"
+    save_results_to_csv(results, output_filename)
+    
+    print("✅ Batch geocoding completed!")
+
+
+if __name__ == "__main__":
+    main()
