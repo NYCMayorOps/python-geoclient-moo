@@ -4,9 +4,8 @@ Advanced search examples for the GeoClient MOO library.
 This script demonstrates the powerful single-field search capabilities,
 including natural language parsing and advanced search options.
 
-Before running this script, set your API credentials as environment variables:
-    export GEOCLIENT_APP_ID="your_app_id"
-    export GEOCLIENT_APP_KEY="your_app_key"
+Before running this script, set your API subscription key as an environment variable:
+    export GEOCLIENT_SUBSCRIPTION_KEY="your_subscription_key"
 """
 
 import os
@@ -18,7 +17,7 @@ from dotenv import load_dotenv
 
 # Load .env file - first try current directory, then parent directory
 load_dotenv()  # Try current directory first
-if not os.getenv("GEOCLIENT_APP_ID"):
+if not os.getenv("GEOCLIENT_SUBSCRIPTION_KEY"):
     # Try parent directory if not found in current directory
     env_path = Path(__file__).parent.parent / '.env'
     load_dotenv(dotenv_path=env_path)
@@ -216,15 +215,14 @@ def analyze_search_results(client: GeoClient) -> None:
 def main():
     """Run all search examples."""
     
-    # Get API credentials
-    app_id = os.getenv("GEOCLIENT_APP_ID") 
-    app_key = os.getenv("GEOCLIENT_APP_KEY")
+    # Get API subscription key
+    subscription_key = os.getenv("GEOCLIENT_SUBSCRIPTION_KEY")
     
-    if not app_id or not app_key:
-        print("ERROR: Please set GEOCLIENT_APP_ID and GEOCLIENT_APP_KEY environment variables")
+    if not subscription_key:
+        print("ERROR: Please set GEOCLIENT_SUBSCRIPTION_KEY environment variable")
         return
     
-    with GeoClient(app_id, app_key) as client:
+    with GeoClient(subscription_key) as client:
         # Run all demonstrations
         demonstrate_search_types(client)
         demonstrate_advanced_search_options(client)

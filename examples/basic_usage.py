@@ -8,11 +8,10 @@ This script demonstrates the most common use cases:
 - Place name geocoding
 - Single-field search
 
-Before running this script, set your API credentials as environment variables:
-    export GEOCLIENT_APP_ID="your_app_id"
-    export GEOCLIENT_APP_KEY="your_app_key"
+Before running this script, set your API subscription key as an environment variable:
+    export GEOCLIENT_SUBSCRIPTION_KEY="your_subscription_key"
 
-Or modify the script to use your credentials directly.
+Or modify the script to use your key directly.
 """
 
 import os
@@ -23,17 +22,16 @@ from geoclient_moo.exceptions import GeoClientError
 def main():
     """Demonstrate basic GeoClient usage."""
     
-    # Get API credentials from environment variables
-    app_id = os.getenv("GEOCLIENT_APP_ID")
-    app_key = os.getenv("GEOCLIENT_APP_KEY")
+    # Get API subscription key from environment variable
+    subscription_key = os.getenv("GEOCLIENT_SUBSCRIPTION_KEY")
     
-    if not app_id or not app_key:
-        print("ERROR: Please set GEOCLIENT_APP_ID and GEOCLIENT_APP_KEY environment variables")
-        print("Visit https://developer.cityofnewyork.us/ to get API credentials")
+    if not subscription_key:
+        print("ERROR: Please set GEOCLIENT_SUBSCRIPTION_KEY environment variable")
+        print("Visit https://api-portal.nyc.gov/ to get a subscription key")
         return
     
     # Initialize the client
-    with GeoClient(app_id, app_key) as client:
+    with GeoClient(subscription_key) as client:
         
         print("🏢 NYC Geoclient API Examples")
         print("=" * 50)
