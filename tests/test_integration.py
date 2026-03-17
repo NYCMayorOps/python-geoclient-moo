@@ -143,6 +143,14 @@ class TestRealAPIIntegration:
         assert result.input == "314 west 100 st manhattan"
         assert len(result.results) > 0
 
+    def test_get_cross_streets_from_address(self, client):
+        """Test getting cross streets from an address."""
+        result = client.get_cross_streets_from_address("253", "broadway", "manhattan")
+        
+        assert result is not None
+        assert "murray" in str.lower(result.cross_street_one) or "warren" in str.lower(result.cross_street_one)
+        assert "murray" in str.lower(result.cross_street_two) or "warren" in str.lower(result.cross_street_two)
+
 
 class TestErrorHandling:
     """Test error handling with real API."""
