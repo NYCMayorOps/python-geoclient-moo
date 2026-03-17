@@ -1,4 +1,4 @@
-"""Main GeoClient class for interacting with the NYC Geoclient 2.0 API."""
+"""Main GeoClient class for interacting with the NYC Geoclient v2 API."""
 
 import time
 from typing import Any, Dict, Optional, Union
@@ -25,21 +25,20 @@ from .models import (
 
 class GeoClient:
     """
-    Python client for the NYC Geoclient 2.0 API.
+    Python client for the NYC Geoclient v2 API.
     
     This client provides methods to geocode NYC addresses, BBLs, BINs, 
     intersections, blockfaces, places, and perform single-field searches.
     
     Args:
-        app_id: Your Geoclient application ID
-        app_key: Your Geoclient application key
+        subscription_key: Your Geoclient API subscription key (Ocp-Apim-Subscription-Key)
         base_url: Base URL for the Geoclient API (defaults to production)
         timeout: Request timeout in seconds (default: 30)
         retries: Number of retries for failed requests (default: 3)
         retry_delay: Delay between retries in seconds (default: 1.0)
     
     Example:
-        >>> client = GeoClient(app_id="your_app_id", app_key="your_app_key")
+        >>> client = GeoClient(subscription_key="your_subscription_key")
         >>> result = client.address("314", "west 100 st", "manhattan")
         >>> print(result.latitude, result.longitude)
     """
@@ -48,18 +47,16 @@ class GeoClient:
     
     def __init__(
         self,
-        app_id: str,
-        app_key: str,
+        subscription_key: str,
         base_url: Optional[str] = None,
         timeout: float = 30.0,
         retries: int = 3,
         retry_delay: float = 1.0,
     ) -> None:
-        if not app_id or not app_key:
-            raise ValueError("Both app_id and app_key are required")
+        if not subscription_key:
+            raise ValueError("subscription_key is required")
             
-        self.app_id = app_id
-        self.app_key = app_key
+        self.subscription_key = subscription_key
         self.base_url = base_url or self.DEFAULT_BASE_URL
         self.timeout = timeout
         self.retries = retries
@@ -71,8 +68,9 @@ class GeoClient:
             
         self.session = requests.Session()
         self.session.headers.update({
-            "User-Agent": f"python-geoclient-moo/0.1.0",
+            "User-Agent": "python-geoclient-moo/0.1.0",
             "Accept": "application/json",
+            "Ocp-Apim-Subscription-Key": self.subscription_key,
         })
     
     def _make_request(
@@ -96,12 +94,8 @@ class GeoClient:
         Raises:
             GeoClientError: For various API and HTTP errors
         """
-        # Add authentication parameters
-        params = params.copy()
-        params["app_id"] = self.app_id
-        params["app_key"] = self.app_key
-        
         # Build URL
+        params = params.copy()
         url = urljoin(self.base_url, endpoint)
         
         # Retry logic
@@ -306,7 +300,7 @@ class GeoClient:
         if zip_code:
             params["zip"] = zip_code
             
-        return self._make_request("address.json", params, AddressResponse)
+        return self._make_request("address", params, AddressResponse)
     
     def bbl(self, borough: str, block: str, lot: str) -> BBLResponse:
         """
@@ -337,7 +331,7 @@ class GeoClient:
             "lot": lot,
         }
         
-        return self._make_request("bbl.json", params, BBLResponse)
+        return self._make_request("bbl", params, BBLResponse)
     
     def bin_(self, bin_number: str) -> BINResponse:
         """
@@ -362,7 +356,7 @@ class GeoClient:
         
         params = {"bin": bin_number}
         
-        return self._make_request("bin.json", params, BINResponse)
+        return self._make_request("bin", params, BINResponse)
     
     def blockface(
         self,
@@ -419,7 +413,7 @@ class GeoClient:
         if compass_direction:
             params["compassDirection"] = compass_direction.upper()
             
-        return self._make_request("blockface.json", params, BlockfaceResponse)
+        return self._make_request("blockface", params, BlockfaceResponse)
     
     def intersection(
         self,
@@ -467,7 +461,7 @@ class GeoClient:
         if compass_direction:
             params["compassDirection"] = compass_direction.upper()
             
-        return self._make_request("intersection.json", params, IntersectionResponse)
+        return self._make_request("intersection", params, IntersectionResponse)
     
     def place(
         self,
@@ -507,7 +501,7 @@ class GeoClient:
         if zip_code:
             params["zip"] = zip_code
             
-        return self._make_request("place.json", params, PlaceResponse)
+        return self._make_request("place", params, PlaceResponse)
     
     def search(
         self,
@@ -578,7 +572,7 @@ class GeoClient:
                 raise ValueError("similar_names_distance must be non-negative")
             params["similarNamesDistance"] = similar_names_distance
             
-        return self._make_request("search.json", params, SearchResponse)
+        return self._make_request("search", params, SearchResponse)
     
     def close(self) -> None:
         """Close the underlying HTTP session."""

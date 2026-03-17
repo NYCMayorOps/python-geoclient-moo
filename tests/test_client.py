@@ -27,9 +27,8 @@ class TestGeoClientInit:
     
     def test_init_basic(self):
         """Test basic client initialization."""
-        client = GeoClient("test_id", "test_key")
-        assert client.app_id == "test_id"
-        assert client.app_key == "test_key"
+        client = GeoClient("test_key")
+        assert client.subscription_key == "test_key"
         assert client.base_url == GeoClient.DEFAULT_BASE_URL
         assert client.timeout == 30.0
         assert client.retries == 3
@@ -39,7 +38,6 @@ class TestGeoClientInit:
         """Test client initialization with custom parameters."""
         custom_url = "https://custom.api.com/geo/"
         client = GeoClient(
-            "test_id", 
             "test_key",
             base_url=custom_url,
             timeout=60.0,
@@ -53,15 +51,12 @@ class TestGeoClientInit:
     
     def test_init_missing_credentials(self):
         """Test client initialization with missing credentials."""
-        with pytest.raises(ValueError, match="Both app_id and app_key are required"):
-            GeoClient("", "test_key")
-        
-        with pytest.raises(ValueError, match="Both app_id and app_key are required"):
-            GeoClient("test_id", "")
+        with pytest.raises(ValueError, match="subscription_key is required"):
+            GeoClient("")
     
     def test_init_base_url_normalization(self):
         """Test base URL normalization."""
-        client = GeoClient("test_id", "test_key", base_url="https://api.nyc.gov/geo/geoclient/v2")
+        client = GeoClient("test_key", base_url="https://api.nyc.gov/geo/geoclient/v2")
         assert client.base_url == "https://api.nyc.gov/geo/geoclient/v2/"
 
 
@@ -70,7 +65,7 @@ class TestGeoClientBoroughValidation:
     
     def test_validate_borough_valid_names(self):
         """Test borough validation with valid names."""
-        client = GeoClient("test_id", "test_key")
+        client = GeoClient("test_key")
         
         assert client._validate_borough("manhattan") == "Manhattan"
         assert client._validate_borough("MANHATTAN") == "Manhattan"
@@ -83,7 +78,7 @@ class TestGeoClientBoroughValidation:
     
     def test_validate_borough_valid_codes(self):
         """Test borough validation with valid codes."""
-        client = GeoClient("test_id", "test_key")
+        client = GeoClient("test_key")
         
         assert client._validate_borough("1") == "Manhattan"
         assert client._validate_borough("2") == "Bronx"
@@ -93,7 +88,7 @@ class TestGeoClientBoroughValidation:
     
     def test_validate_borough_invalid(self):
         """Test borough validation with invalid values."""
-        client = GeoClient("test_id", "test_key")
+        client = GeoClient("test_key")
         
         with pytest.raises(ValueError, match="Invalid borough"):
             client._validate_borough("invalid")
@@ -119,8 +114,8 @@ class TestGeoClientMakeRequest:
         }
         mock_get.return_value = mock_response
         
-        client = GeoClient("test_id", "test_key")
-        result = client._make_request("address.json", {"test": "param"}, AddressResponse)
+        client = GeoClient("test_key")
+        result = client._make_request("address", {"test": "param"}, AddressResponse)
         
         assert isinstance(result, AddressResponse)
         assert result.house_number == "314"
@@ -129,8 +124,7 @@ class TestGeoClientMakeRequest:
         # Verify request was made with correct parameters
         mock_get.assert_called_once()
         args, kwargs = mock_get.call_args
-        assert "app_id" in kwargs["params"]
-        assert "app_key" in kwargs["params"]
+        assert "Ocp-Apim-Subscription-Key" in client.session.headers
         assert kwargs["params"]["test"] == "param"
     
     @patch('geoclient_moo.client.requests.Session.get')
@@ -142,10 +136,10 @@ class TestGeoClientMakeRequest:
         mock_response.text = "Unauthorized"
         mock_get.return_value = mock_response
         
-        client = GeoClient("test_id", "test_key")
+        client = GeoClient("test_key")
         
         with pytest.raises(GeoClientAuthError) as exc_info:
-            client._make_request("address.json", {}, AddressResponse)
+            client._make_request("address", {}, AddressResponse)
         
         assert exc_info.value.status_code == 401
         assert "Authentication failed" in str(exc_info.value)
@@ -159,10 +153,10 @@ class TestGeoClientMakeRequest:
         mock_response.text = "Forbidden"
         mock_get.return_value = mock_response
         
-        client = GeoClient("test_id", "test_key")
+        client = GeoClient("test_key")
         
         with pytest.raises(GeoClientAuthError) as exc_info:
-            client._make_request("address.json", {}, AddressResponse)
+            client._make_request("address", {}, AddressResponse)
         
         assert exc_info.value.status_code == 403
         assert "Access forbidden" in str(exc_info.value)
@@ -176,10 +170,10 @@ class TestGeoClientMakeRequest:
         mock_response.text = "Bad Request"
         mock_get.return_value = mock_response
         
-        client = GeoClient("test_id", "test_key")
+        client = GeoClient("test_key")
         
         with pytest.raises(GeoClientHTTPError) as exc_info:
-            client._make_request("address.json", {}, AddressResponse)
+            client._make_request("address", {}, AddressResponse)
         
         assert exc_info.value.status_code == 400
         assert "Bad request" in str(exc_info.value)

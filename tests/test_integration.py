@@ -6,19 +6,18 @@ from geoclient_moo import GeoClient
 from geoclient_moo.exceptions import GeoClientError, GeoClientAuthError
 
 
-# These tests require real API credentials and are skipped by default
+# These tests require a real API subscription key and are skipped by default
 pytestmark = pytest.mark.skipif(
-    not (os.getenv("GEOCLIENT_APP_ID") and os.getenv("GEOCLIENT_APP_KEY")),
-    reason="Integration tests require GEOCLIENT_APP_ID and GEOCLIENT_APP_KEY environment variables"
+    not os.getenv("GEOCLIENT_SUBSCRIPTION_KEY"),
+    reason="Integration tests require GEOCLIENT_SUBSCRIPTION_KEY environment variable"
 )
 
 
 @pytest.fixture
 def client():
     """Create a GeoClient instance with real credentials."""
-    app_id = os.getenv("GEOCLIENT_APP_ID")
-    app_key = os.getenv("GEOCLIENT_APP_KEY")
-    return GeoClient(app_id, app_key)
+    subscription_key = os.getenv("GEOCLIENT_SUBSCRIPTION_KEY")
+    return GeoClient(subscription_key)
 
 
 class TestRealAPIIntegration:
@@ -182,9 +181,8 @@ class TestContextManager:
     
     def test_context_manager_usage(self):
         """Test using client as context manager."""
-        app_id = os.getenv("GEOCLIENT_APP_ID")
-        app_key = os.getenv("GEOCLIENT_APP_KEY")
+        subscription_key = os.getenv("GEOCLIENT_SUBSCRIPTION_KEY")
         
-        with GeoClient(app_id, app_key) as client:
+        with GeoClient(subscription_key) as client:
             result = client.address("314", "west 100 st", "manhattan")
             assert result.house_number == "314"
