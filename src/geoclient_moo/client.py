@@ -46,7 +46,7 @@ class GeoClient:
         >>> print(result.latitude, result.longitude)
     """
     
-    DEFAULT_BASE_URL = "https://api.nyc.gov/geo/geoclient/v2/"
+    DEFAULT_BASE_URL = "https://api.nyc.gov/geoclient/v2/"
     ENV_VAR = "GEOCLIENT_SUBSCRIPTION_KEY"
     
     def __init__(

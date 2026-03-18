@@ -4,9 +4,8 @@ Batch geocoding example for the GeoClient MOO library.
 This script demonstrates how to geocode multiple addresses efficiently,
 with proper error handling and progress tracking.
 
-Before running this script, set your API credentials as environment variables:
-    export GEOCLIENT_APP_ID="your_app_id"
-    export GEOCLIENT_APP_KEY="your_app_key"
+Before running this script, set your API subscription key as an environment variable:
+    $env:GEOCLIENT_SUBSCRIPTION_KEY = "your_subscription_key"
 """
 
 import os
