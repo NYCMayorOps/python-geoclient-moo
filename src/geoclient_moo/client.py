@@ -1,5 +1,6 @@
 """Main GeoClient class for interacting with the NYC Geoclient v2 API."""
 
+import os
 import time
 from typing import Any, Dict, Optional, Union
 from urllib.parse import urljoin
@@ -31,32 +32,38 @@ class GeoClient:
     intersections, blockfaces, places, and perform single-field searches.
     
     Args:
-        subscription_key: Your Geoclient API subscription key (Ocp-Apim-Subscription-Key)
+        subscription_key: Your Geoclient API subscription key (primary or
+            secondary). If not provided, reads from the GEOCLIENT_SUBSCRIPTION_KEY
+            environment variable.
         base_url: Base URL for the Geoclient API (defaults to production)
         timeout: Request timeout in seconds (default: 30)
         retries: Number of retries for failed requests (default: 3)
         retry_delay: Delay between retries in seconds (default: 1.0)
     
     Example:
-        >>> client = GeoClient(subscription_key="your_subscription_key")
+        >>> client = GeoClient("your_subscription_key")
         >>> result = client.address("314", "west 100 st", "manhattan")
         >>> print(result.latitude, result.longitude)
     """
     
     DEFAULT_BASE_URL = "https://api.nyc.gov/geo/geoclient/v2/"
+    ENV_VAR = "GEOCLIENT_SUBSCRIPTION_KEY"
     
     def __init__(
         self,
-        subscription_key: str,
+        subscription_key: Optional[str] = None,
         base_url: Optional[str] = None,
         timeout: float = 30.0,
         retries: int = 3,
         retry_delay: float = 1.0,
     ) -> None:
-        if not subscription_key:
-            raise ValueError("subscription_key is required")
+        self.subscription_key = subscription_key or os.environ.get(self.ENV_VAR, "")
+        if not self.subscription_key:
+            raise ValueError(
+                "subscription_key is required. Pass it directly or set the "
+                f"{self.ENV_VAR} environment variable."
+            )
             
-        self.subscription_key = subscription_key
         self.base_url = base_url or self.DEFAULT_BASE_URL
         self.timeout = timeout
         self.retries = retries
@@ -94,8 +101,9 @@ class GeoClient:
         Raises:
             GeoClientError: For various API and HTTP errors
         """
-        # Build URL
         params = params.copy()
+
+        # Build URL
         url = urljoin(self.base_url, endpoint)
         
         # Retry logic
@@ -111,13 +119,13 @@ class GeoClient:
                 # Handle HTTP errors
                 if response.status_code == 401:
                     raise GeoClientAuthError(
-                        "Authentication failed. Check your app_id and app_key.",
+                        f"Authentication failed (401) for {url}: {response.text}",
                         status_code=401,
                         response_text=response.text,
                     )
                 elif response.status_code == 403:
                     raise GeoClientAuthError(
-                        "Access forbidden. Your credentials may not have permission for this resource.",
+                        f"Access forbidden (403) for {url}: {response.text}",
                         status_code=403,
                         response_text=response.text,
                     )
@@ -280,7 +288,6 @@ class GeoClient:
             GeoClientError: For API errors
             
         Example:
-            >>> client = GeoClient(app_id="abc", app_key="def")
             >>> result = client.address("314", "west 100 st", "manhattan")
             >>> print(f"Coordinates: {result.latitude}, {result.longitude}")
         """

@@ -108,14 +108,8 @@ def save_results_to_csv(results: List[Dict[str, Any]], filename: str) -> None:
 
 def main():
     """Demonstrate batch geocoding."""
-    
-    # Get API subscription key
-    subscription_key = os.getenv("GEOCLIENT_SUBSCRIPTION_KEY")
-    
-    if not subscription_key:
-        print("ERROR: Please set GEOCLIENT_SUBSCRIPTION_KEY environment variable")
-        return
-    
+
+    # Initialize the client (reads GEOCLIENT_SUBSCRIPTION_KEY from environment)
     # Sample addresses to geocode
     sample_addresses = [
         {"house_number": "314", "street": "west 100 st", "borough": "manhattan"},
@@ -135,7 +129,7 @@ def main():
     print(f"Geocoding {len(sample_addresses)} addresses...")
     
     # Perform batch geocoding
-    with GeoClient(subscription_key) as client:
+    with GeoClient() as client:
         start_time = time.time()
         
         results = batch_geocode_addresses(
