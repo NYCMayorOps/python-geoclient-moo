@@ -16,6 +16,32 @@ from geoclient_moo import GeoClient
 from geoclient_moo.exceptions import GeoClientError
 
 
+def load_addresses_from_csv(filename: str) -> List[Dict[str, str]]:
+    """
+    Load addresses from a CSV file.
+    
+    Expected columns (case-insensitive): house_number, street, borough
+    
+    Args:
+        filename: Path to the CSV file
+        
+    Returns:
+        List of address dictionaries ready for batch_geocode_addresses()
+    """
+    addresses = []
+    with open(filename, newline='', encoding='utf-8') as csvfile:
+        reader = csv.DictReader(csvfile)
+        # Normalize column names to lowercase with underscores
+        for row in reader:
+            normalized = {k.strip().lower().replace(' ', '_'): v.strip() for k, v in row.items()}
+            addresses.append({
+                'house_number': normalized['house_number'],
+                'street': normalized['street'],
+                'borough': normalized['borough'],
+            })
+    return addresses
+
+
 def batch_geocode_addresses(
     addresses: List[Dict[str, str]], 
     client: GeoClient,
@@ -58,6 +84,8 @@ def batch_geocode_addresses(
                 'bbl': result.bbl,
                 'bin': result.bin,
                 'community_district': result.community_district,
+                'cross_street_one': result.cross_street_one,
+                'cross_street_two': result.cross_street_two,
                 'error_message': None,
                 'geosupport_return_code': result.geosupport.return_code,
             })
@@ -87,6 +115,30 @@ def batch_geocode_addresses(
             time.sleep(delay)
     
     return results
+
+
+def geocode_csv(input_file: str, output_file: str, delay: float = 0.1) -> None:
+    """
+    Geocode addresses from an input CSV and write results to an output CSV.
+
+    The input CSV must have columns: house_number, street, borough
+    (column names are case-insensitive; spaces or underscores both accepted).
+
+    Args:
+        input_file: Path to the input CSV file containing addresses.
+        output_file: Path to write the geocoded results CSV.
+        delay: Seconds to wait between API requests (default 0.1).
+    """
+    addresses = load_addresses_from_csv(input_file)
+    print(f"Loaded {len(addresses)} addresses from {input_file}")
+
+    with GeoClient() as client:
+        results = batch_geocode_addresses(addresses, client, delay=delay)
+
+    save_results_to_csv(results, output_file)
+
+    successful = sum(1 for r in results if r['success'])
+    print(f"Done: {successful}/{len(results)} geocoded successfully → {output_file}")
 
 
 def save_results_to_csv(results: List[Dict[str, Any]], filename: str) -> None:
@@ -163,6 +215,7 @@ def main():
                 print(f"  {result['normalized_address']}, {result['normalized_borough']}")
                 print(f"    Coordinates: {result['latitude']:.6f}, {result['longitude']:.6f}")
                 print(f"    BBL: {result['bbl']}, ZIP: {result['zip_code']}")
+                print(f"    Cross Streets: {result.get('cross_street_one', '')}, {result.get('cross_street_two', '')}")
                 print()
     
     # Show failed results
