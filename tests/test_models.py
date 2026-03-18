@@ -235,28 +235,30 @@ class TestPlaceResponse:
     
     def test_from_dict_basic(self):
         """Test PlaceResponse creation from dictionary."""
+        # Mock data mirrors the real /place API response structure.
+        # Note: houseNumber and streetName are NOT returned by the /place endpoint.
+        # boePreferredStreetName holds the place name (e.g. "EMPIRE STATE BUILDING").
         data = {
-            "inputName": "EMPIRE STATE BUILDING",
-            "houseNumber": "350",
-            "streetName": "5 AVENUE",
+            "boePreferredStreetName": "EMPIRE STATE BUILDING",
+            "firstStreetNameNormalized": "EMPIRE STATE BUILDING",
             "boroughCode1In": "1",
-            "boroughName": "MANHATTAN",
+            "firstBoroughName": "MANHATTAN",
             "zipCode": "10118",
-            "latitude": "40.748441",
-            "longitude": "-73.985664",
-            "bbl": "1008160035",
-            "buildingIdentificationNumber": "1001026",
-            "geosupportReturnCode": "00",
+            "latitude": "40.74843",
+            "longitude": "-73.985322",
+            "bbl": "1008350041",
+            "buildingIdentificationNumber": "1015862",
+            "geosupportReturnCode": "01",
         }
         
         response = PlaceResponse.from_dict(data)
         
         assert response.place_name == "EMPIRE STATE BUILDING"
-        assert response.house_number == "350"
-        assert response.street_name == "5 AVENUE"
+        assert response.house_number is None   # not returned by /place endpoint
+        assert response.street_name is None    # not returned by /place endpoint
         assert response.borough_name == "MANHATTAN"
-        assert response.bbl == "1008160035"
-        assert response.bin == "1001026"
+        assert response.bbl == "1008350041"
+        assert response.bin == "1015862"
 
 
 class TestSearchResult:

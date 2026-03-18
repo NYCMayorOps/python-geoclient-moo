@@ -29,8 +29,14 @@ class GeoClientHTTPError(GeoClientError):
 
 class GeoClientAuthError(GeoClientHTTPError):
     """Exception raised for authentication/authorization errors (401, 403)."""
-
-    pass
+    def __init__(
+        self,
+        message: str,
+        status_code: int = 401,
+        response_text: Optional[str] = None,
+        details: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        super().__init__(message, status_code, response_text, details)
 
 
 class GeoClientAPIError(GeoClientError):

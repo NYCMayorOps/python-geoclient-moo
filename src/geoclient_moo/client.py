@@ -65,6 +65,14 @@ class GeoClient:
             )
             
         self.base_url = base_url or self.DEFAULT_BASE_URL
+        
+        # Validate base_url format
+        if not (self.base_url.startswith('http://') or self.base_url.startswith('https://')):
+            raise ValueError(
+                f"Invalid base_url '{self.base_url}'. Must start with http:// or https://. "
+                f"Did you mean to pass this as subscription_key instead?"
+            )
+            
         self.timeout = timeout
         self.retries = retries
         self.retry_delay = retry_delay
@@ -194,11 +202,19 @@ class GeoClient:
         Raises:
             GeoClientAPIError: If Geosupport returned an error code
         """
+        # The API wraps response data under a nested key (e.g. "address", "bbl")
+        check_data = data
+        if "geosupportReturnCode" not in data:
+            for value in data.values():
+                if isinstance(value, dict) and "geosupportReturnCode" in value:
+                    check_data = value
+                    break
+
         # Check main return code
-        return_code = data.get("geosupportReturnCode")
+        return_code = check_data.get("geosupportReturnCode")
         if return_code and return_code not in ("00", "01"):
-            reason_code = data.get("reasonCode")
-            message = data.get("message", "Geosupport error")
+            reason_code = check_data.get("reasonCode")
+            message = check_data.get("message", "Geosupport error")
             raise GeoClientAPIError(
                 f"Geosupport error (code {return_code}): {message}",
                 geosupport_return_code=return_code,
@@ -207,12 +223,12 @@ class GeoClient:
             )
         
         # For Function 1B (address/place), check both sub-function codes
-        return_code_1a = data.get("geosupportReturnCode2")
-        return_code_1e = data.get("returnCode1e")
+        return_code_1a = check_data.get("geosupportReturnCode2")
+        return_code_1e = check_data.get("returnCode1e")
         
         if return_code_1a and return_code_1a not in ("00", "01"):
-            reason_code = data.get("reasonCode2")
-            message = data.get("message2", "Geosupport error in Function 1A")
+            reason_code = check_data.get("reasonCode2")
+            message = check_data.get("message2", "Geosupport error in Function 1A")
             raise GeoClientAPIError(
                 f"Geosupport Function 1A error (code {return_code_1a}): {message}",
                 geosupport_return_code=return_code_1a,
@@ -221,7 +237,7 @@ class GeoClient:
             )
         
         if return_code_1e and return_code_1e not in ("00", "01"):
-            reason_code = data.get("reasonCode1e")
+            reason_code = check_data.get("reasonCode1e")
             message = "Geosupport error in Function 1E"
             raise GeoClientAPIError(
                 f"Geosupport Function 1E error (code {return_code_1e}): {message}",
@@ -580,6 +596,54 @@ class GeoClient:
             params["similarNamesDistance"] = similar_names_distance
             
         return self._make_request("search", params, SearchResponse)
+    
+    def get_cross_streets_from_address(
+        self,
+        house_number: str,
+        street: str,
+        borough: Optional[str] = None,
+        zip_code: Optional[str] = None,
+    ) -> AddressResponse:
+        """
+        Get cross streets for a NYC address.
+        
+        This method geocodes the address and returns cross street information
+        along with other address details.
+        
+        Args:
+            house_number: House number of the address
+            street: Street name or 7-digit street code
+            borough: Borough name (required if zip not given)
+            zip_code: 5-digit ZIP code (required if borough not given)
+            
+        Returns:
+            AddressResponse with cross street information included
+            
+        Raises:
+            ValueError: If required parameters are missing or invalid
+            GeoClientError: For API errors
+            
+        Example:
+            >>> result = client.get_cross_streets_from_address("253", "broadway", "manhattan")
+            >>> print(f"Cross streets: {result.cross_street_one} and {result.cross_street_two}")
+        """
+        if not house_number or not street:
+            raise ValueError("house_number and street are required")
+        
+        if not borough and not zip_code:
+            raise ValueError("Either borough or zip_code must be provided")
+        
+        params = {
+            "houseNumber": house_number,
+            "street": street,
+        }
+        
+        if borough:
+            params["borough"] = self._validate_borough(borough)
+        if zip_code:
+            params["zip"] = zip_code
+            
+        return self._make_request("address", params, AddressResponse)
     
     def close(self) -> None:
         """Close the underlying HTTP session."""

@@ -50,7 +50,7 @@ def main():
             print(f"BBL: {result.bbl}")
             print(f"Address: {result.house_number} {result.street_name}")
             print(f"BIN: {result.building_identification_number}")
-            print(f"Coordinates: {result.latitude:.6f}, {result.longitude:.6f}")
+            #print(f"Coordinates: {result.latitude}, {result.longitude}")
         except GeoClientError as e:
             print(f"Error: {e}")
         
@@ -64,7 +64,7 @@ def main():
             print(f"Address: {result.house_number} {result.street_name}")
             print(f"Borough: {result.borough_name}")
             print(f"BBL: {result.bbl}")
-            print(f"Coordinates: {result.latitude:.6f}, {result.longitude:.6f}")
+            #print(f"Coordinates: {result.latitude:.6f}, {result.longitude:.6f}")
         except GeoClientError as e:
             print(f"Error: {e}")
         
@@ -76,7 +76,7 @@ def main():
             result = client.intersection("broadway", "west 100 st", "manhattan")
             print(f"Intersection: {result.cross_street_one} & {result.cross_street_two}")
             print(f"Borough Code: {result.borough_code}")
-            print(f"Coordinates: {result.latitude:.6f}, {result.longitude:.6f}")
+            #print(f"Coordinates: {result.latitude:.6f}, {result.longitude:.6f}")
         except GeoClientError as e:
             print(f"Error: {e}")
         
@@ -95,7 +95,7 @@ def main():
             print(f"Between: {result.cross_street_one} and {result.cross_street_two}")
             print(f"Segment Length: {result.segment_length} feet")
             print(f"Street Width: {result.street_width} feet")
-            print(f"Coordinates: {result.latitude:.6f}, {result.longitude:.6f}")
+            #print(f"Coordinates: {result.latitude:.6f}, {result.longitude:.6f}")
         except GeoClientError as e:
             print(f"Error: {e}")
         
@@ -109,7 +109,7 @@ def main():
             print(f"Address: {result.house_number} {result.street_name}")
             print(f"Borough: {result.borough_name}")
             print(f"BBL: {result.bbl}")
-            print(f"Coordinates: {result.latitude:.6f}, {result.longitude:.6f}")
+            #print(f"Coordinates: {result.latitude:.6f}, {result.longitude:.6f}")
         except GeoClientError as e:
             print(f"Error: {e}")
         
@@ -135,16 +135,25 @@ def main():
                 for search_result in result.results:
                     if search_result.status == "EXACT_MATCH":
                         response = search_result.response
+                        '''
                         if "latitude" in response and "longitude" in response:
                             lat = float(response["latitude"])
                             lng = float(response["longitude"])
                             print(f"  Exact match: {lat:.6f}, {lng:.6f}")
+                        '''
                         break
                 
             except GeoClientError as e:
                 print(f"Error searching '{query}': {e}")
-        
+        print("example \n8. Get Latitude and Longitude")
+        bbl_result = client.bbl("manhattan", "1889", "1")
+        print(f"BBL: {bbl_result.bbl}")
+        addr_result = client.address(bbl_result.house_number, bbl_result.street_name, bbl_result.borough_name)
+        print(f"Address: {addr_result.house_number} {addr_result.street_name}, {addr_result.borough_name}")
+        print(f"Coordinates: {addr_result.latitude:.6f}, {addr_result.longitude:.6f}")
         print("\n" + "=" * 50)
+
+
         print("✅ Examples completed successfully!")
 
 

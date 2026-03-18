@@ -60,6 +60,10 @@ class AddressResponse(BaseResponse):
     census_tract: Optional[str] = None
     neighborhood_tabulation_area: Optional[str] = None
     
+    # Cross street information
+    cross_street_one: Optional[str] = None
+    cross_street_two: Optional[str] = None
+    
     # Geosupport processing info
     geosupport: GeosupportInfo = field(default_factory=GeosupportInfo)
     
@@ -100,6 +104,8 @@ class AddressResponse(BaseResponse):
             community_district=addr_data.get("communityDistrict"),
             census_tract=addr_data.get("censusTract2010"),
             neighborhood_tabulation_area=addr_data.get("nta"),
+            cross_street_one=addr_data.get("lowCrossStreetName1"),
+            cross_street_two=addr_data.get("highCrossStreetName1"),
             geosupport=geosupport_info,
         )
 
@@ -333,31 +339,36 @@ class PlaceResponse(BaseResponse):
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "PlaceResponse":
         """Create PlaceResponse from API response dictionary."""
+        if "place" in data:
+            place_data = data["place"]
+        else:
+            place_data = data
+
         geosupport_info = GeosupportInfo(
-            return_code=data.get("geosupportReturnCode"),
-            reason_code=data.get("reasonCode"),
-            message=data.get("message"),
-            return_code_1a=data.get("geosupportReturnCode2"),
-            reason_code_1a=data.get("reasonCode2"),
-            message_1a=data.get("message2"),
-            return_code_1e=data.get("returnCode1e"),
-            reason_code_1e=data.get("reasonCode1e"),
+            return_code=place_data.get("geosupportReturnCode"),
+            reason_code=place_data.get("reasonCode"),
+            message=place_data.get("message"),
+            return_code_1a=place_data.get("geosupportReturnCode2"),
+            reason_code_1a=place_data.get("reasonCode2"),
+            message_1a=place_data.get("message2"),
+            return_code_1e=place_data.get("returnCode1e"),
+            reason_code_1e=place_data.get("reasonCode1e"),
         )
         
         return cls(
             raw_data=data,
-            place_name=data.get("inputName"),
-            house_number=data.get("houseNumber"),
-            street_name=data.get("streetName"),
-            borough_code=data.get("boroughCode1In"),
-            borough_name=data.get("boroughName"),
-            zip_code=data.get("zipCode"),
-            latitude=_safe_float(data.get("latitude")),
-            longitude=_safe_float(data.get("longitude")),
-            x_coordinate=_safe_float(data.get("xCoordinate")),
-            y_coordinate=_safe_float(data.get("yCoordinate")),
-            bbl=data.get("bbl"),
-            bin=data.get("buildingIdentificationNumber"),
+            place_name=place_data.get("boePreferredStreetName"),
+            house_number=place_data.get("houseNumber"),
+            street_name=place_data.get("streetName"),
+            borough_code=place_data.get("boroughCode1In"),
+            borough_name=place_data.get("firstBoroughName"),
+            zip_code=place_data.get("zipCode"),
+            latitude=_safe_float(place_data.get("latitude")),
+            longitude=_safe_float(place_data.get("longitude")),
+            x_coordinate=_safe_float(place_data.get("xCoordinate")),
+            y_coordinate=_safe_float(place_data.get("yCoordinate")),
+            bbl=place_data.get("bbl"),
+            bin=place_data.get("buildingIdentificationNumber"),
             geosupport=geosupport_info,
         )
 
