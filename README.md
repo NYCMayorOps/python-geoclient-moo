@@ -57,7 +57,8 @@ To use the Geoclient API, you need to register for free API credentials:
 1. Visit the [NYC Developer Portal](https://developer.cityofnewyork.us/)
 2. Create an account and register a new application
 3. Subscribe to the Geoclient API
-4. Note your `app_id` and `app_key`
+4. There are two keys, a primary and secondary key. Take the first key and
+save it as the enviroment variable GEOCLIENT_SUBSCRIPTION_KEY. 
 
 ## API Methods
 
