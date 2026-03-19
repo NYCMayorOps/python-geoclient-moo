@@ -24,26 +24,16 @@ from .models import (
 )
 
 
-class GeoClient:
+class GeoClient():
     """
-    Python client for the NYC Geoclient v2 API.
-    
-    This client provides methods to geocode NYC addresses, BBLs, BINs, 
-    intersections, blockfaces, places, and perform single-field searches.
-    
-    Args:
-        subscription_key: Your Geoclient API subscription key (primary or
-            secondary). If not provided, reads from the GEOCLIENT_SUBSCRIPTION_KEY
-            environment variable.
-        base_url: Base URL for the Geoclient API (defaults to production)
-        timeout: Request timeout in seconds (default: 30)
-        retries: Number of retries for failed requests (default: 3)
-        retry_delay: Delay between retries in seconds (default: 1.0)
-    
-    Example:
-        >>> client = GeoClient("your_subscription_key")
-        >>> result = client.address("314", "west 100 st", "manhattan")
-        >>> print(result.latitude, result.longitude)
+    A Python client for the NYC Geoclient v2 API.
+
+    Usage:
+
+    from geoclient import GeoClient
+    with GeoClient() as client:
+        result = client.address("314", "west 100 st", "manhattan")
+        print(result.latitude, result.longitude)
     """
     
     DEFAULT_BASE_URL = "https://api.nyc.gov/geoclient/v2/"
