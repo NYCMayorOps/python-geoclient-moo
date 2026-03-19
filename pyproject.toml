@@ -1,11 +1,10 @@
 [build-system]
-requires = ["setuptools>=45", "wheel"]
+requires = ["setuptools>=45", "setuptools-scm", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "python-geoclient-moo"
 dynamic = ["version"]
-[tool.setuptools_scm]
 description = "A Python wrapper for the NYC OTI Geoclient 2.0 API"
 readme = "README.md"
 license = "MIT"
@@ -56,6 +55,8 @@ where = ["src"]
 
 [tool.setuptools.package-dir]
 "" = "src"
+
+[tool.setuptools_scm]
 
 [tool.black]
 line-length = 88
