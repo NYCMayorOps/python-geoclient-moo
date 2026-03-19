@@ -1,7 +1,7 @@
 """Unit tests for the GeoClient exceptions."""
 
 import pytest
-from geoclient_moo.exceptions import (
+from geoclient.exceptions import (
     GeoClientError,
     GeoClientHTTPError,
     GeoClientAuthError,

@@ -10,8 +10,8 @@ Before running this script, set your API subscription key as a Windows environme
 
 import os
 from typing import List, Dict, Any
-from geoclient_moo import GeoClient
-from geoclient_moo.exceptions import GeoClientError
+from geoclient import GeoClient
+from geoclient.exceptions import GeoClientError
 
 def demonstrate_search_types(client: GeoClient) -> None:
     """Demonstrate different types of single-field searches."""

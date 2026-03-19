@@ -1,7 +1,7 @@
 """Unit tests for the GeoClient models."""
 
 import pytest
-from geoclient_moo.models import (
+from geoclient.models import (
     AddressResponse,
     BBLResponse,
     BINResponse,

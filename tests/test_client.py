@@ -4,14 +4,14 @@ import pytest
 import requests
 from unittest.mock import Mock, patch, MagicMock
 
-from geoclient_moo.client import GeoClient
-from geoclient_moo.exceptions import (
+from geoclient.client import GeoClient
+from geoclient.exceptions import (
     GeoClientError,
     GeoClientHTTPError,
     GeoClientAuthError,
     GeoClientAPIError,
 )
-from geoclient_moo.models import (
+from geoclient.models import (
     AddressResponse,
     BBLResponse,
     BINResponse,
@@ -99,7 +99,7 @@ class TestGeoClientBoroughValidation:
 class TestGeoClientMakeRequest:
     """Test cases for the _make_request method."""
     
-    @patch('geoclient_moo.client.requests.Session.get')
+    @patch('geoclient.client.requests.Session.get')
     def test_successful_request(self, mock_get):
         """Test successful API request."""
         # Mock successful response
@@ -126,7 +126,7 @@ class TestGeoClientMakeRequest:
         assert "Ocp-Apim-Subscription-Key" in client.session.headers
         assert kwargs["params"]["test"] == "param"
     
-    @patch('geoclient_moo.client.requests.Session.get')
+    @patch('geoclient.client.requests.Session.get')
     def test_http_error_401(self, mock_get):
         """Test HTTP 401 authentication error."""
         mock_response = Mock()
@@ -143,7 +143,7 @@ class TestGeoClientMakeRequest:
         assert exc_info.value.status_code == 401
         assert "Authentication failed" in str(exc_info.value)
     
-    @patch('geoclient_moo.client.requests.Session.get')
+    @patch('geoclient.client.requests.Session.get')
     def test_http_error_403(self, mock_get):
         """Test HTTP 403 forbidden error."""
         mock_response = Mock()
@@ -160,7 +160,7 @@ class TestGeoClientMakeRequest:
         assert exc_info.value.status_code == 403
         assert "Access forbidden" in str(exc_info.value)
     
-    @patch('geoclient_moo.client.requests.Session.get')
+    @patch('geoclient.client.requests.Session.get')
     def test_http_error_400(self, mock_get):
         """Test HTTP 400 bad request error."""
         mock_response = Mock()
@@ -177,7 +177,7 @@ class TestGeoClientMakeRequest:
         assert exc_info.value.status_code == 400
         assert "Bad request" in str(exc_info.value)
     
-    @patch('geoclient_moo.client.requests.Session.get')
+    @patch('geoclient.client.requests.Session.get')
     def test_geosupport_error(self, mock_get):
         """Test Geosupport API error handling."""
         mock_response = Mock()
@@ -199,7 +199,7 @@ class TestGeoClientMakeRequest:
         assert exc_info.value.reason_code == "INVALID_HOUSE_NUMBER"
         assert "HOUSE NUMBER NOT FOUND" in str(exc_info.value)
     
-    @patch('geoclient_moo.client.requests.Session.get')
+    @patch('geoclient.client.requests.Session.get')
     def test_invalid_json_response(self, mock_get):
         """Test handling of invalid JSON response."""
         mock_response = Mock()
@@ -217,7 +217,7 @@ class TestGeoClientMakeRequest:
 class TestGeoClientAddressEndpoint:
     """Test cases for the address endpoint."""
     
-    @patch('geoclient_moo.client.GeoClient._make_request')
+    @patch('geoclient.client.GeoClient._make_request')
     def test_address_basic(self, mock_request, client):
         """Test basic address geocoding."""
         mock_response = AddressResponse(raw_data={})
@@ -236,7 +236,7 @@ class TestGeoClientAddressEndpoint:
             AddressResponse
         )
     
-    @patch('geoclient_moo.client.GeoClient._make_request')
+    @patch('geoclient.client.GeoClient._make_request')
     def test_address_with_zip(self, mock_request, client):
         """Test address geocoding with ZIP code."""
         mock_response = AddressResponse(raw_data={})
@@ -266,7 +266,7 @@ class TestGeoClientAddressEndpoint:
 class TestGeoClientBBLEndpoint:
     """Test cases for the BBL endpoint."""
     
-    @patch('geoclient_moo.client.GeoClient._make_request')
+    @patch('geoclient.client.GeoClient._make_request')
     def test_bbl_basic(self, mock_request, client):
         """Test basic BBL lookup."""
         mock_response = BBLResponse(raw_data={})
@@ -294,7 +294,7 @@ class TestGeoClientBBLEndpoint:
 class TestGeoClientBINEndpoint:
     """Test cases for the BIN endpoint."""
     
-    @patch('geoclient_moo.client.GeoClient._make_request')
+    @patch('geoclient.client.GeoClient._make_request')
     def test_bin_basic(self, mock_request, client):
         """Test basic BIN lookup."""
         mock_response = BINResponse(raw_data={})
@@ -318,7 +318,7 @@ class TestGeoClientBINEndpoint:
 class TestGeoClientSearchEndpoint:
     """Test cases for the search endpoint."""
     
-    @patch('geoclient_moo.client.GeoClient._make_request')
+    @patch('geoclient.client.GeoClient._make_request')
     def test_search_basic(self, mock_request, client):
         """Test basic search."""
         mock_response = SearchResponse(raw_data={})
@@ -333,7 +333,7 @@ class TestGeoClientSearchEndpoint:
             SearchResponse
         )
     
-    @patch('geoclient_moo.client.GeoClient._make_request')
+    @patch('geoclient.client.GeoClient._make_request')
     def test_search_with_options(self, mock_request, client):
         """Test search with optional parameters."""
         mock_response = SearchResponse(raw_data={})
@@ -383,7 +383,7 @@ class TestGeoClientContextManager:
             
             mock_close.assert_called_once()
     
-    @patch('geoclient_moo.client.requests.Session.close')
+    @patch('geoclient.client.requests.Session.close')
     def test_close_method(self, mock_session_close):
         """Test close method."""
         test_client = GeoClient("test_key")

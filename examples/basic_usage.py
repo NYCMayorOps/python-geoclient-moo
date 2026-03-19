@@ -13,8 +13,8 @@ Before running this script, set your API subscription key as a Windows environme
 """
 
 import os
-from geoclient_moo import GeoClient
-from geoclient_moo.exceptions import GeoClientError
+from geoclient import GeoClient
+from geoclient.exceptions import GeoClientError
 
 
 def main():

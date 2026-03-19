@@ -101,7 +101,7 @@ python_functions = ["test_*"]
 addopts = [
     "--strict-markers",
     "--strict-config",
-    "--cov=geoclient_moo",
+    "--cov=geoclient",
     "--cov-report=term-missing",
     "--cov-report=html",
     "--cov-report=xml",

@@ -2,8 +2,8 @@
 
 import os
 import pytest
-from geoclient_moo import GeoClient
-from geoclient_moo.exceptions import GeoClientError, GeoClientAuthError, GeoClientAPIError
+from geoclient import GeoClient
+from geoclient.exceptions import GeoClientError, GeoClientAuthError, GeoClientAPIError
 
 
 # These tests require a real API subscription key and are skipped by default

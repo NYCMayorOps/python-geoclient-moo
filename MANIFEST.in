@@ -1,7 +1,7 @@
 include README.md
 include LICENSE
 include MANIFEST.in
-recursive-include src/geoclient_moo *.py
+recursive-include src/geoclient *.py
 recursive-include tests *.py
 recursive-include examples *.py *.md
 global-exclude __pycache__

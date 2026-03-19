@@ -12,8 +12,8 @@ import os
 import csv
 import time
 from typing import List, Dict, Any
-from geoclient_moo import GeoClient
-from geoclient_moo.exceptions import GeoClientError
+from geoclient import GeoClient
+from geoclient.exceptions import GeoClientError
 
 
 def load_addresses_from_csv(filename: str) -> List[Dict[str, str]]:

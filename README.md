@@ -29,7 +29,7 @@ pip install python-geoclient-moo
 ## Quick Start
 
 ```python
-from geoclient_moo import GeoClient
+from geoclient import GeoClient
 
 # Initialize the client with your API credentials
 client = GeoClient(
@@ -197,7 +197,7 @@ print(result.raw_data)          # Complete API response dict
 The library provides comprehensive error handling:
 
 ```python
-from geoclient_moo.exceptions import (
+from geoclient.exceptions import (
     GeoClientError,           # Base exception
     GeoClientHTTPError,       # HTTP errors (4xx, 5xx)
     GeoClientAuthError,       # Authentication errors (401, 403)
@@ -287,7 +287,7 @@ pip install -e ".[dev]"
 pytest tests/ -v
 
 # Run with coverage
-pytest tests/ --cov=geoclient_moo --cov-report=html
+pytest tests/ --cov=geoclient --cov-report=html
 
 # Run integration tests (requires API credentials)
 export GEOCLIENT_APP_ID="your_app_id"
