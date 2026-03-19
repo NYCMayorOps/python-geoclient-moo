@@ -79,6 +79,31 @@ class TestLoadAddressesFromCsv:
         with pytest.raises(KeyError):
             load_addresses_from_csv(str(csv_file))
 
+    def test_null_house_number_column_missing(self, tmp_path):
+        """Missing house_number column produces None, not a KeyError."""
+        csv_file = tmp_path / "addresses.csv"
+        csv_file.write_text(
+            "street,borough\n"
+            "broadway,manhattan\n",
+            encoding="utf-8",
+        )
+        addresses = load_addresses_from_csv(str(csv_file))
+        assert len(addresses) == 1
+        assert addresses[0]["house_number"] is None
+        assert addresses[0]["street"] == "broadway"
+
+    def test_empty_house_number_value(self, tmp_path):
+        """Empty house_number value in CSV is normalised to None."""
+        csv_file = tmp_path / "addresses.csv"
+        csv_file.write_text(
+            "house_number,street,borough\n"
+            ",broadway,manhattan\n",
+            encoding="utf-8",
+        )
+        addresses = load_addresses_from_csv(str(csv_file))
+        assert len(addresses) == 1
+        assert addresses[0]["house_number"] is None
+
 
 class TestBatchGeocodeAddresses:
     """Tests for batch_geocode_addresses."""
@@ -173,6 +198,49 @@ class TestBatchGeocodeAddresses:
         client = self._mock_client(responses)
 
         results = batch_geocode_addresses(addresses, client, delay=0)
+        assert results[0].keys() == results[1].keys()
+
+    def test_null_house_number_produces_error_result(self):
+        """A None house_number is recorded as a failure without raising."""
+        addresses = [
+            {"house_number": None, "street": "broadway", "borough": "manhattan"},
+        ]
+        client = MagicMock()
+
+        results = batch_geocode_addresses(addresses, client, delay=0)
+        assert len(results) == 1
+        assert results[0]["success"] is False
+        assert results[0]["input_house_number"] is None
+        assert results[0]["latitude"] is None
+        assert results[0]["error_message"] is not None
+        client.address.assert_not_called()
+
+    def test_empty_string_house_number_produces_error_result(self):
+        """An empty-string house_number is recorded as a failure without raising."""
+        addresses = [
+            {"house_number": "", "street": "broadway", "borough": "manhattan"},
+        ]
+        client = MagicMock()
+
+        results = batch_geocode_addresses(addresses, client, delay=0)
+        assert len(results) == 1
+        assert results[0]["success"] is False
+        assert results[0]["input_house_number"] == ""
+        assert results[0]["error_message"] is not None
+        client.address.assert_not_called()
+
+    def test_null_house_number_result_keys_match_success(self):
+        """Null-house-number failure dict has the same keys as a success dict."""
+        addresses = [
+            {"house_number": "314", "street": "west 100 st", "borough": "manhattan"},
+            {"house_number": None, "street": "broadway", "borough": "manhattan"},
+        ]
+        responses = [self._mock_address_response()]
+        client = self._mock_client(responses)
+
+        results = batch_geocode_addresses(addresses, client, delay=0)
+        assert results[0]["success"] is True
+        assert results[1]["success"] is False
         assert results[0].keys() == results[1].keys()
 
 

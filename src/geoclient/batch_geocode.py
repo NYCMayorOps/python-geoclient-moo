@@ -25,7 +25,7 @@ def load_addresses_from_csv(filename: str) -> List[Dict[str, str]]:
         for row in reader:
             normalized = {k.strip().lower().replace(' ', '_'): v.strip() for k, v in row.items()}
             addresses.append({
-                'house_number': normalized['house_number'],
+                'house_number': normalized.get('house_number') or None,
                 'street': normalized['street'],
                 'borough': normalized['borough'],
             })
@@ -51,8 +51,32 @@ def batch_geocode_addresses(
     results = []
     
     for i, addr in enumerate(addresses, 1):
-        print(f"Processing {i}/{len(addresses)}: {addr['house_number']} {addr['street']}, {addr['borough']}")
-        
+        house_number_display = addr['house_number'] if addr['house_number'] else '(no house number)'
+        print(f"Processing {i}/{len(addresses)}: {house_number_display} {addr['street']}, {addr['borough']}")
+
+        if not addr['house_number']:
+            results.append({
+                'input_house_number': addr['house_number'],
+                'input_street': addr['street'],
+                'input_borough': addr['borough'],
+                'success': False,
+                'latitude': None,
+                'longitude': None,
+                'normalized_address': None,
+                'normalized_borough': None,
+                'zip_code': None,
+                'bbl': None,
+                'bin': None,
+                'community_district': None,
+                'cross_street_one': None,
+                'cross_street_two': None,
+                'error_message': "house_number is required",
+                'geosupport_return_code': None,
+            })
+            if delay > 0:
+                time.sleep(delay)
+            continue
+
         try:
             result = client.address(
                 addr['house_number'], 
