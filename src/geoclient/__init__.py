@@ -21,6 +21,12 @@ from .models import (
     PlaceResponse,
     SearchResponse,
 )
+from .batch_geocode import (
+    batch_geocode_addresses,
+    geocode_csv,
+    load_addresses_from_csv,
+    save_results_to_csv,
+)
 
 __version__ = "0.1.0"
 __author__ = "NYC Mayor's Office of Operations"
@@ -39,4 +45,8 @@ __all__ = [
     "IntersectionResponse",
     "PlaceResponse",
     "SearchResponse",
+    "batch_geocode_addresses",
+    "geocode_csv",
+    "load_addresses_from_csv",
+    "save_results_to_csv",
 ]
