@@ -1,5 +1,7 @@
 # Python Geoclient MOO
 
+- Author @SteveScott
+
 A comprehensive Python wrapper for the NYC OTI Geoclient 2.0 API, providing easy access to New York City's official geocoding service.
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
@@ -233,29 +235,76 @@ client = GeoClient(
 
 ## Advanced Usage
 
-### Batch Processing
+### Batch Geocoding
+
+The library includes a batch geocoding module for processing many addresses at once, with built-in rate limiting and error handling.
+
+#### CSV-to-CSV (simplest)
+
+Geocode an entire CSV file in one call:
 
 ```python
+from geoclient import geocode_csv
+
+# Input CSV must have columns: house_number, street, borough
+geocode_csv("addresses.csv", "results.csv", delay=0.1)
+```
+
+#### Programmatic batch
+
+For more control, use `batch_geocode_addresses` with your own client:
+
+```python
+from geoclient import GeoClient, batch_geocode_addresses
+
 addresses = [
-    ("314", "west 100 st", "manhattan"),
-    ("350", "5th ave", "manhattan"),
-    ("1", "wall st", "manhattan"),
+    {"house_number": "314", "street": "west 100 st", "borough": "manhattan"},
+    {"house_number": "350", "street": "5th ave", "borough": "manhattan"},
 ]
 
-results = []
-with GeoClient("app_id", "app_key") as client:
-    for house_num, street, borough in addresses:
-        try:
-            result = client.address(house_num, street, borough)
-            results.append({
-                'input': f"{house_num} {street}",
-                'lat': result.latitude,
-                'lng': result.longitude,
-                'bbl': result.bbl
-            })
-        except GeoClientError as e:
-            print(f"Error geocoding {house_num} {street}: {e}")
+with GeoClient() as client:
+    results = batch_geocode_addresses(addresses, client, delay=0.1)
+
+for r in results:
+    if r["success"]:
+        print(f"{r['normalized_address']}: {r['latitude']}, {r['longitude']}")
+    else:
+        print(f"FAILED {r['input_house_number']} {r['input_street']}: {r['error_message']}")
 ```
+
+#### Load addresses from CSV
+
+```python
+from geoclient import load_addresses_from_csv
+
+addresses = load_addresses_from_csv("addresses.csv")
+# Returns: [{"house_number": "314", "street": "west 100 st", "borough": "manhattan"}, ...]
+```
+
+Column names are case-insensitive and accept spaces or underscores (e.g., `House Number` or `house_number`).
+
+#### Save results to CSV
+
+```python
+from geoclient import save_results_to_csv
+
+save_results_to_csv(results, "output.csv")
+```
+
+#### Result fields
+
+Each result dict contains:
+
+| Field | Success | Failure |
+|---|---|---|
+| `input_house_number`, `input_street`, `input_borough` | Original input | Original input |
+| `success` | `True` | `False` |
+| `latitude`, `longitude` | Coordinates | `None` |
+| `normalized_address`, `normalized_borough` | Geosupport-normalized | `None` |
+| `zip_code`, `bbl`, `bin`, `community_district` | Property info | `None` |
+| `cross_street_one`, `cross_street_two` | Cross streets | `None` |
+| `error_message` | `None` | Error description |
+| `geosupport_return_code` | `"00"` | Error code or `None` |
 
 ### Borough Validation
 
@@ -315,13 +364,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Support
 
-- 📧 **Email**: [gis-development@doitt.nyc.gov](mailto:gis-development@doitt.nyc.gov)
+- 📧 **Email**: [Steve Scott](mailto:steve@stevescott.blog)
 - 🐛 **Issues**: [GitHub Issues](https://github.com/NYCMayorOps/python-geoclient-moo/issues)
 - 📖 **Documentation**: [Official Geoclient Docs](https://maps.nyc.gov/geoclient/v2/doc)
 
 ## Changelog
 
-### v0.1.0 (2024-10-29)
+### v1.0.0 (2026-03-19)
 
 - Initial release
 - Full support for all Geoclient 2.0 API endpoints
