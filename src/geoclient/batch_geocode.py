@@ -53,12 +53,23 @@ def batch_geocode_addresses(addresses: List[Dict[str, str]], client: GeoClient, 
         print(f"Processing {i}/{len(addresses)}: {house_number_display} {addr['street']}, {addr['borough']}")
 
         if not addr['house_number']:
-            results.append(BatchGeocodeResult(
-                input_house_number=addr['house_number'],
-                input_street=addr['street'],
-                input_borough=addr['borough'],
-                error_message="house_number is required",
-            ))
+            try:
+                geocoded = client.place(addr['street'], addr['borough'])
+                results.append(BatchGeocodeResult.from_place_response(
+                    addr['street'], addr['borough'], geocoded
+                ))
+            except GeoClientError as e:
+                results.append(BatchGeocodeResult(
+                    input_house_number=addr['house_number'],
+                    input_street=addr['street'],
+                    input_borough=addr['borough'],
+                    error_message=str(e),
+                    geosupport_return_code=getattr(e, 'geosupport_return_code', None),
+                ))
+                print(f"  \u274c Error (place fallback): {e}")
+
+            if delay > 0:
+                time.sleep(delay)
             continue
 
         try:

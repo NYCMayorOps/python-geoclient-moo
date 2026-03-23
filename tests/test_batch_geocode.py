@@ -202,43 +202,80 @@ class TestBatchGeocodeAddresses:
         results = batch_geocode_addresses(addresses, client, delay=0)
         assert dataclasses.asdict(results[0]).keys() == dataclasses.asdict(results[1]).keys()
 
-    def test_null_house_number_produces_error_result(self):
-        """A None house_number is recorded as a failure without raising."""
+    def test_null_house_number_falls_back_to_place(self):
+        """A None house_number triggers a place() fallback."""
         addresses = [
             {"house_number": None, "street": "broadway", "borough": "manhattan"},
         ]
+        mock_place = MagicMock()
+        mock_place.street_name = "BROADWAY"
+        mock_place.borough_name = "MANHATTAN"
+        mock_place.latitude = 40.7128
+        mock_place.longitude = -74.0060
+        mock_place.zip_code = "10007"
+        mock_place.bbl = None
+        mock_place.bin = None
+        mock_place.geosupport = MagicMock(return_code="00")
+
         client = MagicMock()
+        client.place.return_value = mock_place
 
         results = batch_geocode_addresses(addresses, client, delay=0)
         assert len(results) == 1
-        assert results[0].success is False
+        assert results[0].success is True
         assert results[0].input_house_number is None
-        assert results[0].latitude is None
-        assert results[0].error_message is not None
+        assert results[0].latitude == 40.7128
         client.address.assert_not_called()
+        client.place.assert_called_once_with("broadway", "manhattan")
 
-    def test_empty_string_house_number_produces_error_result(self):
-        """An empty-string house_number is recorded as a failure without raising."""
+    def test_empty_string_house_number_falls_back_to_place(self):
+        """An empty-string house_number triggers a place() fallback."""
         addresses = [
             {"house_number": "", "street": "broadway", "borough": "manhattan"},
         ]
+        mock_place = MagicMock()
+        mock_place.street_name = "BROADWAY"
+        mock_place.borough_name = "MANHATTAN"
+        mock_place.latitude = 40.7128
+        mock_place.longitude = -74.0060
+        mock_place.zip_code = "10007"
+        mock_place.bbl = None
+        mock_place.bin = None
+        mock_place.geosupport = MagicMock(return_code="00")
+
         client = MagicMock()
+        client.place.return_value = mock_place
+
+        results = batch_geocode_addresses(addresses, client, delay=0)
+        assert len(results) == 1
+        assert results[0].success is True
+        assert results[0].input_house_number is None
+        client.address.assert_not_called()
+        client.place.assert_called_once()
+
+    def test_null_house_number_place_fallback_failure(self):
+        """When place() also fails, a failure result is recorded."""
+        addresses = [
+            {"house_number": None, "street": "not a place", "borough": "manhattan"},
+        ]
+        client = MagicMock()
+        client.place.side_effect = GeoClientError("PLACE NOT RECOGNIZED")
 
         results = batch_geocode_addresses(addresses, client, delay=0)
         assert len(results) == 1
         assert results[0].success is False
-        assert results[0].input_house_number == ""
-        assert results[0].error_message is not None
+        assert results[0].error_message == "PLACE NOT RECOGNIZED"
         client.address.assert_not_called()
 
     def test_null_house_number_result_keys_match_success(self):
-        """Null-house-number failure dict has the same keys as a success dict."""
+        """Null-house-number result has the same keys as a success dict."""
         addresses = [
             {"house_number": "314", "street": "west 100 st", "borough": "manhattan"},
-            {"house_number": None, "street": "broadway", "borough": "manhattan"},
+            {"house_number": None, "street": "not a place", "borough": "manhattan"},
         ]
-        responses = [self._mock_address_response()]
-        client = self._mock_client(responses)
+        client = MagicMock()
+        client.address.side_effect = [self._mock_address_response()]
+        client.place.side_effect = GeoClientError("FAIL")
 
         results = batch_geocode_addresses(addresses, client, delay=0)
         assert results[0].success is True

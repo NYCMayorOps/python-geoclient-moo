@@ -476,6 +476,30 @@ class BatchGeocodeResult:
             geosupport_return_code=geocoded.geosupport.return_code,
         )
 
+    @classmethod
+    def from_place_response(
+        cls,
+        input_street: str,
+        input_borough: str,
+        geocoded: "PlaceResponse",
+    ) -> "BatchGeocodeResult":
+        """Build a successful result from a PlaceResponse (no house number)."""
+        normalized = geocoded.street_name or geocoded.place_name
+        return cls(
+            input_house_number=None,
+            input_street=input_street,
+            input_borough=input_borough,
+            success=True,
+            latitude=geocoded.latitude,
+            longitude=geocoded.longitude,
+            normalized_address=normalized,
+            normalized_borough=geocoded.borough_name,
+            zip_code=geocoded.zip_code,
+            bbl=geocoded.bbl,
+            bin=geocoded.bin,
+            geosupport_return_code=geocoded.geosupport.return_code,
+        )
+
     def to_dict(self) -> Dict[str, Any]:
         """Serialize to a plain dict suitable for CSV output."""
         return asdict(self)
