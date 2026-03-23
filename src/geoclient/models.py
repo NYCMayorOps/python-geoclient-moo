@@ -1,7 +1,7 @@
 """Data models for GeoClient API responses."""
 
 from typing import Any, Dict, List, Optional, Union
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 
 
 @dataclass
@@ -419,6 +419,66 @@ class SearchResponse(BaseResponse):
             exact_match=data.get("exactMatch"),
             similar_names=data.get("similarNames", []),
         )
+
+
+@dataclass
+class BatchGeocodeResult:
+    """Result DTO for a single address geocoded in a batch operation."""
+
+    # Input fields
+    input_house_number: Optional[str] = None
+    input_street: Optional[str] = None
+    input_borough: Optional[str] = None
+
+    # Status
+    success: bool = False
+
+    # Geocoded output (populated on success)
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    normalized_address: Optional[str] = None
+    normalized_borough: Optional[str] = None
+    zip_code: Optional[str] = None
+    bbl: Optional[str] = None
+    bin: Optional[str] = None
+    community_district: Optional[str] = None
+    cross_street_one: Optional[str] = None
+    cross_street_two: Optional[str] = None
+
+    # Error / Geosupport status
+    error_message: Optional[str] = None
+    geosupport_return_code: Optional[str] = None
+
+    @classmethod
+    def from_address_response(
+        cls,
+        input_house_number: Optional[str],
+        input_street: str,
+        input_borough: str,
+        geocoded: "AddressResponse",
+    ) -> "BatchGeocodeResult":
+        """Build a successful result from an AddressResponse."""
+        return cls(
+            input_house_number=input_house_number,
+            input_street=input_street,
+            input_borough=input_borough,
+            success=True,
+            latitude=geocoded.latitude,
+            longitude=geocoded.longitude,
+            normalized_address=f"{geocoded.house_number} {geocoded.street_name}",
+            normalized_borough=geocoded.borough_name,
+            zip_code=geocoded.zip_code,
+            bbl=geocoded.bbl,
+            bin=geocoded.bin,
+            community_district=geocoded.community_district,
+            cross_street_one=geocoded.cross_street_one,
+            cross_street_two=geocoded.cross_street_two,
+            geosupport_return_code=geocoded.geosupport.return_code,
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize to a plain dict suitable for CSV output."""
+        return asdict(self)
 
 
 def _safe_float(value: Any) -> Optional[float]:

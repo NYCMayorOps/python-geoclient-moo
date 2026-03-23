@@ -1,9 +1,11 @@
 
 import csv
+import dataclasses
 import time
-from typing import List, Dict, Any
+from typing import Dict, List
 from geoclient import GeoClient
 from geoclient.exceptions import GeoClientError
+from geoclient.models import BatchGeocodeResult
 
 
 def load_addresses_from_csv(filename: str) -> List[Dict[str, str]]:
@@ -32,104 +34,51 @@ def load_addresses_from_csv(filename: str) -> List[Dict[str, str]]:
     return addresses
 
 
-def batch_geocode_addresses(
-    addresses: List[Dict[str, str]], 
-    client: GeoClient,
-    delay: float = 0.1
-) -> List[Dict[str, Any]]:
+def batch_geocode_addresses(addresses: List[Dict[str, str]], client: GeoClient, delay: float = 0.1) -> List[BatchGeocodeResult]:
     """
     Geocode a batch of addresses with error handling and rate limiting.
-    
+
     Args:
         addresses: List of address dictionaries with keys: house_number, street, borough
         client: Initialized GeoClient instance
         delay: Delay between requests in seconds (for rate limiting)
-        
+
     Returns:
-        List of geocoding results with success/error information
+        List of BatchGeocodeResult with success/error information for each address
     """
     results = []
-    
+
     for i, addr in enumerate(addresses, 1):
-        house_number_display = addr['house_number'] if addr['house_number'] else '(no house number)'
+        house_number_display = addr['house_number'] or '(no house number)'
         print(f"Processing {i}/{len(addresses)}: {house_number_display} {addr['street']}, {addr['borough']}")
 
         if not addr['house_number']:
-            results.append({
-                'input_house_number': addr['house_number'],
-                'input_street': addr['street'],
-                'input_borough': addr['borough'],
-                'success': False,
-                'latitude': None,
-                'longitude': None,
-                'normalized_address': None,
-                'normalized_borough': None,
-                'zip_code': None,
-                'bbl': None,
-                'bin': None,
-                'community_district': None,
-                'cross_street_one': None,
-                'cross_street_two': None,
-                'error_message': "house_number is required",
-                'geosupport_return_code': None,
-            })
-            if delay > 0:
-                time.sleep(delay)
+            results.append(BatchGeocodeResult(
+                input_house_number=addr['house_number'],
+                input_street=addr['street'],
+                input_borough=addr['borough'],
+                error_message="house_number is required",
+            ))
             continue
 
         try:
-            result = client.address(
-                addr['house_number'], 
-                addr['street'], 
-                addr['borough']
-            )
-            
-            # Successful geocoding
-            results.append({
-                'input_house_number': addr['house_number'],
-                'input_street': addr['street'],
-                'input_borough': addr['borough'],
-                'success': True,
-                'latitude': result.latitude,
-                'longitude': result.longitude,
-                'normalized_address': f"{result.house_number} {result.street_name}",
-                'normalized_borough': result.borough_name,
-                'zip_code': result.zip_code,
-                'bbl': result.bbl,
-                'bin': result.bin,
-                'community_district': result.community_district,
-                'cross_street_one': result.cross_street_one,
-                'cross_street_two': result.cross_street_two,
-                'error_message': None,
-                'geosupport_return_code': result.geosupport.return_code,
-            })
-            
+            geocoded = client.address(addr['house_number'], addr['street'], addr['borough'])
+            results.append(BatchGeocodeResult.from_address_response(
+                addr['house_number'], addr['street'], addr['borough'], geocoded
+            ))
         except GeoClientError as e:
-            # Failed geocoding
-            results.append({
-                'input_house_number': addr['house_number'],
-                'input_street': addr['street'],
-                'input_borough': addr['borough'],
-                'success': False,
-                'latitude': None,
-                'longitude': None,
-                'normalized_address': None,
-                'normalized_borough': None,
-                'zip_code': None,
-                'bbl': None,
-                'bin': None,
-                'community_district': None,
-                'cross_street_one': None,
-                'cross_street_two': None,
-                'error_message': str(e),
-                'geosupport_return_code': getattr(e, 'geosupport_return_code', None),
-            })
+            results.append(BatchGeocodeResult(
+                input_house_number=addr['house_number'],
+                input_street=addr['street'],
+                input_borough=addr['borough'],
+                error_message=str(e),
+                geosupport_return_code=getattr(e, 'geosupport_return_code', None),
+            ))
             print(f"  ❌ Error: {e}")
-        
-        # Rate limiting
+
         if delay > 0:
             time.sleep(delay)
-    
+
     return results
 
 
@@ -153,22 +102,21 @@ def geocode_csv(input_file: str, output_file: str, delay: float = 0.1) -> None:
 
     save_results_to_csv(results, output_file)
 
-    successful = sum(1 for r in results if r['success'])
+    successful = sum(1 for r in results if r.success)
     print(f"Done: {successful}/{len(results)} geocoded successfully → {output_file}")
 
 
-def save_results_to_csv(results: List[Dict[str, Any]], filename: str) -> None:
+def save_results_to_csv(results: List[BatchGeocodeResult], filename: str) -> None:
     """Save geocoding results to a CSV file."""
     if not results:
         print("No results to save")
         return
-    
-    fieldnames = results[0].keys()
-    
+
+    rows = [dataclasses.asdict(r) for r in results]
     with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer = csv.DictWriter(csvfile, fieldnames=list(rows[0].keys()))
         writer.writeheader()
-        writer.writerows(results)
-    
+        writer.writerows(rows)
+
     print(f"✅ Results saved to {filename}")
 

@@ -1,6 +1,7 @@
 """Tests for batch geocoding functions."""
 
 import csv
+import dataclasses
 import os
 import tempfile
 from unittest.mock import MagicMock, patch
@@ -14,6 +15,7 @@ from geoclient.batch_geocode import (
     save_results_to_csv,
 )
 from geoclient.exceptions import GeoClientError
+from geoclient.models import BatchGeocodeResult
 
 
 class TestLoadAddressesFromCsv:
@@ -145,12 +147,12 @@ class TestBatchGeocodeAddresses:
 
         results = batch_geocode_addresses(addresses, client, delay=0)
         assert len(results) == 2
-        assert all(r["success"] for r in results)
-        assert results[0]["input_house_number"] == "314"
-        assert results[0]["latitude"] == 40.798178
-        assert results[0]["cross_street_one"] == "WEST END AVENUE"
-        assert results[0]["cross_street_two"] == "RIVERSIDE DRIVE"
-        assert results[0]["error_message"] is None
+        assert all(r.success for r in results)
+        assert results[0].input_house_number == "314"
+        assert results[0].latitude == 40.798178
+        assert results[0].cross_street_one == "WEST END AVENUE"
+        assert results[0].cross_street_two == "RIVERSIDE DRIVE"
+        assert results[0].error_message is None
 
     def test_one_failure(self):
         addresses = [
@@ -165,12 +167,12 @@ class TestBatchGeocodeAddresses:
 
         results = batch_geocode_addresses(addresses, client, delay=0)
         assert len(results) == 2
-        assert results[0]["success"] is True
-        assert results[1]["success"] is False
-        assert results[1]["error_message"] == "NOT RECOGNIZED"
-        assert results[1]["latitude"] is None
-        assert results[1]["cross_street_one"] is None
-        assert results[1]["cross_street_two"] is None
+        assert results[0].success is True
+        assert results[1].success is False
+        assert results[1].error_message == "NOT RECOGNIZED"
+        assert results[1].latitude is None
+        assert results[1].cross_street_one is None
+        assert results[1].cross_street_two is None
 
     def test_all_fail(self):
         addresses = [
@@ -180,7 +182,7 @@ class TestBatchGeocodeAddresses:
 
         results = batch_geocode_addresses(addresses, client, delay=0)
         assert len(results) == 1
-        assert results[0]["success"] is False
+        assert results[0].success is False
 
     def test_empty_list(self):
         client = MagicMock()
@@ -198,7 +200,7 @@ class TestBatchGeocodeAddresses:
         client = self._mock_client(responses)
 
         results = batch_geocode_addresses(addresses, client, delay=0)
-        assert results[0].keys() == results[1].keys()
+        assert dataclasses.asdict(results[0]).keys() == dataclasses.asdict(results[1]).keys()
 
     def test_null_house_number_produces_error_result(self):
         """A None house_number is recorded as a failure without raising."""
@@ -209,10 +211,10 @@ class TestBatchGeocodeAddresses:
 
         results = batch_geocode_addresses(addresses, client, delay=0)
         assert len(results) == 1
-        assert results[0]["success"] is False
-        assert results[0]["input_house_number"] is None
-        assert results[0]["latitude"] is None
-        assert results[0]["error_message"] is not None
+        assert results[0].success is False
+        assert results[0].input_house_number is None
+        assert results[0].latitude is None
+        assert results[0].error_message is not None
         client.address.assert_not_called()
 
     def test_empty_string_house_number_produces_error_result(self):
@@ -224,9 +226,9 @@ class TestBatchGeocodeAddresses:
 
         results = batch_geocode_addresses(addresses, client, delay=0)
         assert len(results) == 1
-        assert results[0]["success"] is False
-        assert results[0]["input_house_number"] == ""
-        assert results[0]["error_message"] is not None
+        assert results[0].success is False
+        assert results[0].input_house_number == ""
+        assert results[0].error_message is not None
         client.address.assert_not_called()
 
     def test_null_house_number_result_keys_match_success(self):
@@ -239,9 +241,9 @@ class TestBatchGeocodeAddresses:
         client = self._mock_client(responses)
 
         results = batch_geocode_addresses(addresses, client, delay=0)
-        assert results[0]["success"] is True
-        assert results[1]["success"] is False
-        assert results[0].keys() == results[1].keys()
+        assert results[0].success is True
+        assert results[1].success is False
+        assert dataclasses.asdict(results[0]).keys() == dataclasses.asdict(results[1]).keys()
 
 
 class TestSaveResultsToCsv:
@@ -250,8 +252,8 @@ class TestSaveResultsToCsv:
     def test_saves_correct_content(self, tmp_path):
         output = tmp_path / "results.csv"
         results = [
-            {"input_house_number": "314", "success": True, "latitude": 40.798},
-            {"input_house_number": "bad", "success": False, "latitude": None},
+            BatchGeocodeResult(input_house_number="314", input_street="west 100 st", input_borough="manhattan", success=True, latitude=40.798),
+            BatchGeocodeResult(input_house_number="bad", input_street="fake st", input_borough="manhattan", success=False),
         ]
         save_results_to_csv(results, str(output))
 

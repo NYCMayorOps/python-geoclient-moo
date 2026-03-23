@@ -40,6 +40,7 @@ __all__ = [
     "GeoClientAPIError",
     "AddressResponse",
     "BBLResponse",
+    "BatchGeocodeResult",
     "BINResponse",
     "BlockfaceResponse",
     "IntersectionResponse",
