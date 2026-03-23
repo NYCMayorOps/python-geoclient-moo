@@ -58,7 +58,7 @@ def batch_geocode_addresses(addresses: List[Dict[str, str]], client: GeoClient, 
                 results.append(BatchGeocodeResult.from_place_response(
                     addr['street'], addr['borough'], geocoded
                 ))
-            except GeoClientError as e:
+            except (GeoClientError, ValueError) as e:
                 results.append(BatchGeocodeResult(
                     input_house_number=addr['house_number'],
                     input_street=addr['street'],
