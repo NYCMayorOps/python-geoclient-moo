@@ -15,6 +15,7 @@ from .exceptions import (
 from .models import (
     AddressResponse,
     BBLResponse,
+    BatchGeocodeResult,
     BINResponse,
     BlockfaceResponse,
     IntersectionResponse,
