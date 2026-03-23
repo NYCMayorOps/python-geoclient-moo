@@ -27,7 +27,13 @@ from .models import (
 class GeoClient():
     """
     A Python client for the NYC Geoclient v2 API.
-
+    Params:
+    - subscription_key: Your Geoclient API subscription key (can also be set via GEOCLIENT_SUBSCRIPTION_KEY env var)
+    - base_url: Base URL for the API (default: https://api.nyc.gov/geoclient/v2/)
+    - timeout: Request timeout in seconds (default: 30)
+    - retries: Number of times to retry a failed request (default: 3)
+    - retry_delay: Delay between retries in seconds (default: 1.0)
+    
     Usage:
 
     from geoclient import GeoClient
